@@ -2,7 +2,15 @@
 
 API REST para gerenciamento de lançamentos financeiros pessoais, desenvolvida com Node.js, Express, TypeScript e PostgreSQL.
 
-Este repositório contém o backend do projeto, preparado para execução em container Docker e integração com um fluxo de entrega contínua utilizando GitHub Actions e Render.
+Este repositório contém o backend do projeto, preparado para execução em container Docker e integração com um fluxo de integração e entrega contínua (CI/CD), utilizando GitHub Actions e Render.
+
+## API publicada
+
+A aplicação está hospedada no Render e pode ser acessada pelo endereço:
+
+**URL:** https://controle-financeiro-iec.onrender.com
+
+**Health Check:** https://controle-financeiro-iec.onrender.com/api/health
 
 ## Tecnologias utilizadas
 
@@ -14,6 +22,8 @@ Este repositório contém o backend do projeto, preparado para execução em con
 - CORS
 - Dotenv
 - Docker
+- GitHub Actions
+- Render
 
 ## Funcionalidades
 
@@ -112,7 +122,32 @@ Para iniciar o container:
 docker run --rm -p 3000:3000 --env-file backend/.env controle-financeiro-iec
 ```
 
-A API estará disponível em `http://localhost:3000`.
+A API estará disponível em:
+
+`http://localhost:3000`
+
+## Integração e entrega contínua (CI/CD)
+
+O projeto utiliza GitHub Actions para automatizar a validação e o processo de deploy da aplicação no Render.
+
+O workflow está localizado em:
+
+`.github/workflows/deploy.yml`
+
+A automação é executada quando ocorre um push na branch `main`.
+
+As etapas executadas pelo workflow são:
+
+1. Checkout do repositório.
+2. Configuração do pnpm e do Node.js.
+3. Instalação das dependências.
+4. Compilação do TypeScript.
+5. Construção da imagem Docker.
+6. Acionamento do Deploy Hook do Render.
+
+A URL do Deploy Hook é armazenada como um secret no GitHub Actions, utilizando o nome `RENDER_DEPLOY_HOOK_URL`, evitando a exposição de credenciais no código-fonte.
+
+O Auto-Deploy do Render permanece desativado. Dessa forma, o deploy é solicitado pelo GitHub Actions somente após a execução das etapas do workflow.
 
 ## Health Check
 
@@ -151,6 +186,10 @@ As requisições que enviam dados utilizam o formato JSON.
 
 ```text
 controle-financeiro-iec/
+│
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
 │
 ├── backend/
 │   ├── src/
