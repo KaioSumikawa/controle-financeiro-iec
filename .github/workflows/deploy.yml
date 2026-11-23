@@ -1,0 +1,56 @@
+name: CI/CD - Render
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript
+        working-directory: backend
+        run: pnpm build
+
+      - name: Build Docker image
+        run: docker build -t controle-financeiro-iec .
+
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "Deploy Hook secret is missing."
+            exit 1
+          fi
+
+          status=$(curl -sS -o /tmp/render-response.txt -w "%{http_code}" -X POST "$RENDER_DEPLOY_HOOK_URL")
+          cat /tmp/render-response.txt
+
+          if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+            echo "Render deploy failed with HTTP status $status"
+            exit 1
+          fi
+
+          echo "Render deploy successfully triggered."
